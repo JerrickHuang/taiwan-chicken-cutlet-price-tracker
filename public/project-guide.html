@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>雞排物價觀測站完整實作教學</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1f2933;
+      --muted: #65758b;
+      --line: #d9e2ec;
+      --paper: #ffffff;
+      --soft: #f6f8fb;
+      --coral: #d94f30;
+      --gold: #f2b84b;
+      --teal: #167c80;
+      --blue: #315f9f;
+      --green: #3d7a43;
+      --code: #111827;
+      --shadow: 0 18px 48px rgba(31, 41, 51, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background: var(--soft);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      line-height: 1.72;
+    }
+
+    a {
+      color: var(--blue);
+      font-weight: 800;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 3px;
+    }
+
+    code {
+      border-radius: 5px;
+      background: #eef3f8;
+      padding: 0.12rem 0.35rem;
+      color: #c2410c;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.92em;
+    }
+
+    pre {
+      margin: 14px 0 0;
+      overflow-x: auto;
+      border-radius: 8px;
+      background: var(--code);
+      color: #f8fafc;
+      padding: 16px;
+      line-height: 1.58;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    }
+
+    pre code {
+      padding: 0;
+      background: transparent;
+      color: inherit;
+    }
+
+    .hero {
+      background:
+        linear-gradient(135deg, rgba(217, 79, 48, 0.96), rgba(49, 95, 159, 0.92)),
+        url("/assets/chicken-cutlet-hero.png") center / cover;
+      color: #fff;
+      padding: 54px 20px 42px;
+    }
+
+    .hero-inner,
+    main {
+      width: min(1160px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 280px;
+      gap: 30px;
+      align-items: center;
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      font-weight: 900;
+      letter-spacing: 0;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      max-width: 860px;
+      margin-bottom: 14px;
+      font-size: clamp(2.2rem, 6vw, 4.8rem);
+      line-height: 1.04;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin-bottom: 12px;
+      font-size: 1.65rem;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin-bottom: 8px;
+      font-size: 1.15rem;
+    }
+
+    .intro {
+      max-width: 780px;
+      margin-bottom: 20px;
+      font-size: 1.1rem;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      border-radius: 6px;
+      padding: 10px 15px;
+      background: #fff;
+      color: var(--ink);
+      text-decoration: none;
+      font-weight: 900;
+    }
+
+    .button.secondary {
+      background: rgba(255, 255, 255, 0.16);
+      color: #fff;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.52);
+    }
+
+    .hero-card {
+      overflow: hidden;
+      border: 2px solid rgba(255, 255, 255, 0.76);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.14);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-card img {
+      display: block;
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+    }
+
+    .hero-card strong {
+      display: block;
+      padding: 12px;
+      color: #fff7d7;
+      text-align: center;
+    }
+
+    .nav-wrap {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(14px);
+    }
+
+    .nav {
+      width: min(1160px, calc(100% - 32px));
+      margin: 0 auto;
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 10px 0;
+    }
+
+    .nav a {
+      flex: 0 0 auto;
+      border-radius: 999px;
+      padding: 7px 11px;
+      background: #eef3f8;
+      color: var(--ink);
+      text-decoration: none;
+      font-size: 0.92rem;
+    }
+
+    main {
+      padding: 32px 0 54px;
+    }
+
+    section {
+      scroll-margin-top: 78px;
+    }
+
+    section + section {
+      margin-top: 32px;
+    }
+
+    .section-panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+      padding: 24px;
+      box-shadow: 0 12px 32px rgba(31, 41, 51, 0.08);
+    }
+
+    .lead {
+      color: var(--muted);
+      font-size: 1.04rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .grid.two {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .mini-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfdff;
+      padding: 16px;
+    }
+
+    .mini-card strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--coral);
+      font-size: 1.12rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--line);
+      padding: 11px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #eef3f8;
+      color: #334155;
+      font-size: 0.92rem;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .callout {
+      margin-top: 14px;
+      border-left: 4px solid var(--teal);
+      border-radius: 6px;
+      background: #eefafa;
+      padding: 14px 16px;
+    }
+
+    .warning {
+      border-left-color: var(--gold);
+      background: #fffaf0;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 12px;
+      margin-top: 16px;
+      counter-reset: step;
+    }
+
+    .step {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 16px 16px 16px 56px;
+    }
+
+    .step::before {
+      counter-increment: step;
+      content: counter(step);
+      position: absolute;
+      left: 16px;
+      top: 17px;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      background: var(--teal);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+    }
+
+    .screenshot-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .shot {
+      border: 1px dashed #aab8c8;
+      border-radius: 8px;
+      background: #fbfdff;
+      padding: 14px;
+    }
+
+    .shot strong {
+      display: block;
+      color: var(--blue);
+    }
+
+    .footer {
+      margin-top: 34px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 880px) {
+      .hero-grid,
+      .grid,
+      .grid.two,
+      .screenshot-list {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-card {
+        max-width: 240px;
+      }
+
+      .section-panel {
+        padding: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner hero-grid">
+      <div>
+        <p class="eyebrow">逢甲大學 Web 程式設計期末專題</p>
+        <h1>雞排物價觀測站完整實作教學</h1>
+        <p class="intro">從 OpenSpec 規格、Express.js API、SQLite 資料庫、互動前端，到 GitHub 與 Azure App Service 部署，一頁看懂整個期末專案如何完成。</p>
+        <div class="hero-actions">
+          <a class="button" href="/">開啟作品網站</a>
+          <a class="button secondary" href="https://github.com/JerrickHuang/taiwan-chicken-cutlet-price-tracker" target="_blank" rel="noreferrer">查看 GitHub</a>
+          <a class="button secondary" href="/api/health" target="_blank" rel="noreferrer">檢查 Azure API</a>
+        </div>
+      </div>
+      <figure class="hero-card">
+        <img src="/assets/chicken-cutlet-hero.png" alt="金黃色酥脆雞排">
+        <strong>1993-2026 台灣雞排價格追蹤</strong>
+      </figure>
+    </div>
+  </header>
+
+  <div class="nav-wrap">
+    <nav class="nav" aria-label="頁面導覽">
+      <a href="#profile">基本資料</a>
+      <a href="#topic">主題說明</a>
+      <a href="#spec">功能規格</a>
+      <a href="#architecture">技術架構</a>
+      <a href="#database">SQLite</a>
+      <a href="#api">API</a>
+      <a href="#openspec">OpenSpec</a>
+      <a href="#local">本機執行</a>
+      <a href="#deploy">Azure 部署</a>
+      <a href="#screenshots">截圖清單</a>
+      <a href="#checklist">檢查表</a>
+    </nav>
+  </div>
+
+  <main>
+    <section id="profile" class="section-panel">
+      <h2>一、基本資料</h2>
+      <table>
+        <tbody>
+          <tr><th>姓名</th><td>黃祺齡</td></tr>
+          <tr><th>學號</th><td>D1499082</td></tr>
+          <tr><th>班級</th><td>逢甲大學資訊工程學系學士後專班 114-2</td></tr>
+          <tr><th>課程名稱</th><td>Web 程式設計</td></tr>
+          <tr><th>授課老師</th><td>劉明機</td></tr>
+          <tr><th>網站標題</th><td>雞排物價觀測站</td></tr>
+          <tr><th>GitHub Repo</th><td><a href="https://github.com/JerrickHuang/taiwan-chicken-cutlet-price-tracker" target="_blank" rel="noreferrer">taiwan-chicken-cutlet-price-tracker</a></td></tr>
+          <tr><th>Azure 網站</th><td><a href="https://price-tracker-d1499082-cycwaybya0djcvgy.eastasia-01.azurewebsites.net" target="_blank" rel="noreferrer">雞排物價觀測站 Azure 版</a></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="topic" class="section-panel">
+      <h2>二、主題說明：為什麼選雞排</h2>
+      <p class="lead">雞排是台灣常見的庶民小吃，很多人對它的價格有生活記憶。從早期 30 元、40 元，到近年熱門商圈可能出現 90 元到 120 元，雞排很適合用來觀察民生物價變化。</p>
+      <div class="grid">
+        <article class="mini-card">
+          <strong>生活化</strong>
+          <p>雞排是大眾熟悉的商品，使用者容易理解資料意義。</p>
+        </article>
+        <article class="mini-card">
+          <strong>有趨勢</strong>
+          <p>1993 到 2026 年價格變化明顯，適合做圖表與年份滑桿。</p>
+        </article>
+        <article class="mini-card">
+          <strong>能查詢</strong>
+          <p>不同年份、店家與商圈資料可用表格、搜尋與來源說明呈現。</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="spec" class="section-panel">
+      <h2>三、功能規格表</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>分類</th>
+            <th>功能</th>
+            <th>說明</th>
+            <th>狀態</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>資料輸入</td><td>新增價格紀錄</td><td>輸入日期、商品名稱、商品價格並儲存到 SQLite</td><td>已完成</td></tr>
+          <tr><td>查詢</td><td>歷史資料表格</td><td>以表格呈現 1993 到 2026 年雞排價格資料</td><td>已完成</td></tr>
+          <tr><td>查詢</td><td>文字搜尋</td><td>搜尋年份、商品、來源代號與備註</td><td>已完成</td></tr>
+          <tr><td>互動</td><td>年份滑桿</td><td>拖曳年份查看該年附近資料</td><td>已完成</td></tr>
+          <tr><td>圖表</td><td>歷年價格折線圖</td><td>用 Canvas 呈現長期價格趨勢</td><td>已完成</td></tr>
+          <tr><td>後端</td><td>Express Web API</td><td>提供查詢、新增、摘要與爬蟲 API</td><td>已完成</td></tr>
+          <tr><td>資料庫</td><td>SQLite</td><td>本機使用 data/data.db，Azure 使用 /home/data/data.db</td><td>已完成</td></tr>
+          <tr><td>加分</td><td>爬蟲示範</td><td>讀取公開來源網頁標題、狀態碼與讀取時間</td><td>已完成</td></tr>
+          <tr><td>加分</td><td>Azure 部署</td><td>部署 Express + SQLite 到 Azure App Service</td><td>已完成</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="architecture" class="section-panel">
+      <h2>四、技術架構</h2>
+      <p class="lead">本專案採用 Express 同時提供靜態前端與 REST API，前端再用 fetch 呼叫 API，資料儲存在 SQLite。</p>
+      <pre><code>使用者瀏覽器
+  ↓
+public/index.html + styles.css + app.js
+  ↓ fetch API
+server.js / Express.js
+  ↓
+src/database.js / SQLite</code></pre>
+      <div class="grid two">
+        <article class="mini-card">
+          <strong>前端</strong>
+          <p>HTML、CSS、JavaScript、Canvas、搜尋框、滑桿、表格、即時新增回饋。</p>
+        </article>
+        <article class="mini-card">
+          <strong>後端</strong>
+          <p>Node.js、Express.js、SQLite、REST API、爬蟲示範與 Azure 部署設定。</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="database" class="section-panel">
+      <h2>五、SQLite 資料庫設計</h2>
+      <p>資料表為 <code>price_records</code>，支援單一年份、期間資料、價格區間、來源與推估註記。</p>
+      <table>
+        <thead>
+          <tr><th>欄位</th><th>用途</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>record_date</code></td><td>使用者輸入日期或資料代表日期</td></tr>
+          <tr><td><code>item_name</code></td><td>商品名稱，預設為雞排</td></tr>
+          <tr><td><code>period</code></td><td>顯示用期間，例如 1993-1995</td></tr>
+          <tr><td><code>year_start</code> / <code>year_end</code></td><td>支援年份滑桿與圖表計算</td></tr>
+          <tr><td><code>price_ntd</code></td><td>代表價格</td></tr>
+          <tr><td><code>price_min_ntd</code> / <code>price_max_ntd</code></td><td>價格區間</td></tr>
+          <tr><td><code>is_estimated</code></td><td>0 為來源紀錄，1 為推估資料</td></tr>
+          <tr><td><code>source_ref</code> / <code>source_url</code></td><td>來源代號與來源網址</td></tr>
+        </tbody>
+      </table>
+      <div class="callout">
+        Azure 部署時資料庫路徑會自動改成 <code>/home/data/data.db</code>，避免每次重新部署就清掉雲端資料。
+      </div>
+    </section>
+
+    <section id="api" class="section-panel">
+      <h2>六、Express API 規格</h2>
+      <table>
+        <thead>
+          <tr><th>Method</th><th>路徑</th><th>功能</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>GET</td><td><code>/api/health</code></td><td>檢查執行環境與資料庫路徑</td></tr>
+          <tr><td>GET</td><td><code>/api/prices</code></td><td>取得價格資料，可用 q、year、estimated 篩選</td></tr>
+          <tr><td>POST</td><td><code>/api/prices</code></td><td>新增一筆價格紀錄</td></tr>
+          <tr><td>GET</td><td><code>/api/prices/summary</code></td><td>取得資料筆數、最高價、最低價、平均價</td></tr>
+          <tr><td>GET</td><td><code>/api/sources</code></td><td>取得來源列表</td></tr>
+          <tr><td>POST</td><td><code>/api/crawl</code></td><td>爬蟲示範，讀取公開來源網頁標題與狀態碼</td></tr>
+        </tbody>
+      </table>
+      <pre><code>{
+  "record_date": "2026-06-20",
+  "item_name": "雞排",
+  "price_ntd": "120"
+}</code></pre>
+    </section>
+
+    <section id="openspec" class="section-panel">
+      <h2>七、OpenSpec / SDD 流程</h2>
+      <p class="lead">本專案不是直接寫程式，而是先用 OpenSpec 定義需求、設計與任務，確定網站要做什麼後再進入實作。</p>
+      <table>
+        <thead>
+          <tr><th>文件</th><th>用途</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>proposal.md</code></td><td>說明專案原因、功能變更與影響範圍</td></tr>
+          <tr><td><code>design.md</code></td><td>說明技術架構、資料模型、API 與部署設計</td></tr>
+          <tr><td><code>tasks.md</code></td><td>將專案拆成可檢查的任務清單</td></tr>
+          <tr><td><code>specs/</code></td><td>細分價格管理、查詢、視覺化、爬蟲、部署文件規格</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="local" class="section-panel">
+      <h2>八、本機執行教學</h2>
+      <div class="timeline">
+        <article class="step">
+          <h3>進入專案資料夾</h3>
+          <pre><code>cd /Users/jerrickhuang/CodexProject/taiwan-chicken-cutlet-price-tracker</code></pre>
+        </article>
+        <article class="step">
+          <h3>安裝套件</h3>
+          <pre><code>npm install</code></pre>
+        </article>
+        <article class="step">
+          <h3>啟動網站</h3>
+          <pre><code>npm start</code></pre>
+        </article>
+        <article class="step">
+          <h3>瀏覽器開啟</h3>
+          <pre><code>http://localhost:3000</code></pre>
+        </article>
+      </div>
+      <div class="callout warning">
+        如果 <code>localhost:3000</code> 打不開，通常代表 <code>npm start</code> 沒有啟動或終端機被關閉。重新執行 <code>npm start</code> 後再重新整理瀏覽器即可。
+      </div>
+    </section>
+
+    <section id="deploy" class="section-panel">
+      <h2>九、GitHub 與 Azure 部署</h2>
+      <div class="grid two">
+        <article class="mini-card">
+          <strong>GitHub</strong>
+          <p>原始碼推送到 <a href="https://github.com/JerrickHuang/taiwan-chicken-cutlet-price-tracker" target="_blank" rel="noreferrer">taiwan-chicken-cutlet-price-tracker</a>，並透過 GitHub Actions 自動部署。</p>
+        </article>
+        <article class="mini-card">
+          <strong>Azure</strong>
+          <p>Azure App Service 名稱為 <code>price-tracker-d1499082</code>，Region 使用 East Asia，Runtime 使用 Node 22 LTS。</p>
+        </article>
+      </div>
+      <table>
+        <tbody>
+          <tr><th>Azure 網站</th><td><a href="https://price-tracker-d1499082-cycwaybya0djcvgy.eastasia-01.azurewebsites.net" target="_blank" rel="noreferrer">開啟部署網站</a></td></tr>
+          <tr><th>健康檢查 API</th><td><a href="https://price-tracker-d1499082-cycwaybya0djcvgy.eastasia-01.azurewebsites.net/api/health" target="_blank" rel="noreferrer">開啟 /api/health</a></td></tr>
+          <tr><th>GitHub Actions</th><td><a href="https://github.com/JerrickHuang/taiwan-chicken-cutlet-price-tracker/actions" target="_blank" rel="noreferrer">查看部署紀錄</a></td></tr>
+        </tbody>
+      </table>
+      <pre><code>{
+  "ok": true,
+  "app": "雞排物價觀測站",
+  "environment": "azure",
+  "database": "/home/data/data.db"
+}</code></pre>
+    </section>
+
+    <section id="screenshots" class="section-panel">
+      <h2>十、Notion 截圖清單</h2>
+      <p class="lead">以下畫面建議放入 Notion，讓文件變成完整的圖文教學。</p>
+      <div class="screenshot-list">
+        <div class="shot"><strong>1. localhost 首頁</strong><span>網址：<code>http://localhost:3000</code></span></div>
+        <div class="shot"><strong>2. 價格摘要</strong><span>截到資料筆數、最低價、最高價、平均價。</span></div>
+        <div class="shot"><strong>3. 新增資料</strong><span>截到新增表單與成功訊息。</span></div>
+        <div class="shot"><strong>4. 年份滑桿</strong><span>截到 2026 年附近的資料卡。</span></div>
+        <div class="shot"><strong>5. 折線圖</strong><span>截到 1993 到 2026 的價格折線圖。</span></div>
+        <div class="shot"><strong>6. 搜尋功能</strong><span>搜尋 <code>2018</code> 或 <code>熱門商圈</code>。</span></div>
+        <div class="shot"><strong>7. 爬蟲示範</strong><span>截到狀態碼 200、頁面標題、讀取時間。</span></div>
+        <div class="shot"><strong>8. GitHub Repo</strong><span>截到原始碼檔案列表。</span></div>
+        <div class="shot"><strong>9. GitHub Actions</strong><span>截到最新 workflow 綠色成功勾勾。</span></div>
+        <div class="shot"><strong>10. Azure Overview</strong><span>截到 Running、Node 22 LTS、Resource group。</span></div>
+        <div class="shot"><strong>11. Azure 網站首頁</strong><span>截到公開網址的作品首頁。</span></div>
+        <div class="shot"><strong>12. /api/health</strong><span>截到 <code>environment: azure</code> 和 <code>/home/data/data.db</code>。</span></div>
+      </div>
+    </section>
+
+    <section id="checklist" class="section-panel">
+      <h2>十一、PDF 要求檢查表</h2>
+      <table>
+        <thead>
+          <tr><th>項目</th><th>檢查結果</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>A. 網站功能</td><td>有標題、輸入欄位、表格查詢、搜尋、滑桿與圖表</td></tr>
+          <tr><td>B. 技術架構</td><td>前端網頁、Express.js Web API、SQLite 資料庫皆完成</td></tr>
+          <tr><td>C. 原始碼繳交</td><td>已推送到 GitHub，且未提交 node_modules 與本機資料庫</td></tr>
+          <tr><td>D. 技術說明文件</td><td>已產生 Markdown 與此一頁式教學網頁</td></tr>
+          <tr><td>E. 加分項目</td><td>已完成爬蟲功能與 Azure App Service 部署</td></tr>
+        </tbody>
+      </table>
+      <div class="callout">
+        本頁可作為 Notion 文件的補充連結，也可直接截圖當作「完整實作教學網頁」證明。
+      </div>
+    </section>
+
+    <p class="footer">雞排物價觀測站｜Web 程式設計期末專題｜黃祺齡 D1499082</p>
+  </main>
+</body>
+</html>
