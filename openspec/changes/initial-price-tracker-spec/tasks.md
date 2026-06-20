@@ -50,8 +50,8 @@
 
 ## 7. GitHub Submission
 
-- [ ] 7.1 Initialize git repository if needed
-- [ ] 7.2 Commit the working project with OpenSpec files
+- [x] 7.1 Initialize git repository if needed
+- [x] 7.2 Commit the working project with OpenSpec files
 - [ ] 7.3 Create GitHub repository named `taiwan-chicken-cutlet-price-tracker`
 - [ ] 7.4 Push source code to GitHub and confirm `node_modules` is not included
 
