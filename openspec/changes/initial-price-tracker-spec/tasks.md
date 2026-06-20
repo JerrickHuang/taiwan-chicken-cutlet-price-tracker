@@ -52,8 +52,8 @@
 
 - [x] 7.1 Initialize git repository if needed
 - [x] 7.2 Commit the working project with OpenSpec files
-- [ ] 7.3 Create GitHub repository named `taiwan-chicken-cutlet-price-tracker`
-- [ ] 7.4 Push source code to GitHub and confirm `node_modules` is not included
+- [x] 7.3 Create GitHub repository named `taiwan-chicken-cutlet-price-tracker`
+- [x] 7.4 Push source code to GitHub and confirm `node_modules` is not included
 
 ## 8. Azure Deployment
 
