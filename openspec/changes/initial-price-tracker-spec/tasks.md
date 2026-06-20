@@ -66,9 +66,9 @@
 
 ## 9. Notion Report
 
-- [ ] 9.1 Create Markdown report with name, student ID, class, course, instructor, and website title
-- [ ] 9.2 Add product introduction and personal reason for choosing chicken cutlet
-- [ ] 9.3 Add OpenSpec specification table and implementation process
-- [ ] 9.4 Add localhost execution steps with screenshot placeholders
-- [ ] 9.5 Add GitHub and Azure deployment steps with screenshot placeholders
-- [ ] 9.6 Add final checklist matching the PDF requirements A through E
+- [x] 9.1 Create Markdown report with name, student ID, class, course, instructor, and website title
+- [x] 9.2 Add product introduction and personal reason for choosing chicken cutlet
+- [x] 9.3 Add OpenSpec specification table and implementation process
+- [x] 9.4 Add localhost execution steps with screenshot placeholders
+- [x] 9.5 Add GitHub and Azure deployment steps with screenshot placeholders
+- [x] 9.6 Add final checklist matching the PDF requirements A through E
