@@ -14,10 +14,13 @@
         <h1>雞排物價觀測站</h1>
         <p class="intro">用一片雞排，看見台灣庶民小吃從銅板價走向百元時代的價格變化。</p>
       </div>
-      <div class="price-badge" aria-label="網站主題圖示">
-        <span class="badge-main">雞排</span>
-        <span class="badge-price">1993-2026</span>
-      </div>
+      <figure class="hero-food-card" aria-label="網站主題圖片">
+        <img src="/assets/chicken-cutlet-hero.png" alt="金黃色酥脆雞排">
+        <figcaption>
+          <span>雞排</span>
+          <strong>1993-2026</strong>
+        </figcaption>
+      </figure>
     </div>
   </header>
 
@@ -66,6 +69,7 @@
           </label>
           <button type="submit">新增紀錄</button>
           <p id="form-message" class="message" role="status" aria-live="polite"></p>
+          <div id="latest-record" class="latest-record" hidden></div>
         </form>
       </div>
 

@@ -1,7 +1,8 @@
 const state = {
   records: [],
   summary: null,
-  selectedYear: 2026
+  selectedYear: 2026,
+  latestRecord: null
 };
 
 const els = {
@@ -13,7 +14,8 @@ const els = {
   yearSlider: document.querySelector('#year-slider'),
   yearResults: document.querySelector('#year-results'),
   summaryGrid: document.querySelector('#summary-grid'),
-  chart: document.querySelector('#price-chart')
+  chart: document.querySelector('#price-chart'),
+  latestRecord: document.querySelector('#latest-record')
 };
 
 els.crawlerForm = document.querySelector('#crawler-form');
@@ -59,6 +61,7 @@ async function loadData() {
 
 function renderAll() {
   renderSummary();
+  renderLatestRecord();
   renderTable();
   renderYearResults();
   drawChart();
@@ -95,9 +98,10 @@ function renderTable() {
     const source = record.source_url
       ? `<a href="${escapeHtml(record.source_url)}" target="_blank" rel="noreferrer">${escapeHtml(record.source_ref)}</a>`
       : escapeHtml(record.source_ref);
+    const isLatest = state.latestRecord && Number(record.id) === Number(state.latestRecord.id);
 
     return `
-      <tr>
+      <tr class="${isLatest ? 'highlight-row' : ''}">
         <td>${escapeHtml(record.period)}</td>
         <td>${escapeHtml(record.item_name)}</td>
         <td class="price">${formatPrice(record.price_ntd)}</td>
@@ -108,6 +112,22 @@ function renderTable() {
       </tr>
     `;
   }).join('');
+}
+
+function renderLatestRecord() {
+  if (!state.latestRecord) {
+    els.latestRecord.hidden = true;
+    els.latestRecord.innerHTML = '';
+    return;
+  }
+
+  const record = state.latestRecord;
+  els.latestRecord.hidden = false;
+  els.latestRecord.innerHTML = `
+    <strong>剛新增：${escapeHtml(record.period)}｜${escapeHtml(record.item_name)}</strong>
+    伺服器實際儲存價格：${formatPrice(record.price_ntd)}，價格區間
+    ${formatPrice(record.price_min_ntd)} - ${formatPrice(record.price_max_ntd)}
+  `;
 }
 
 function recordMatchesYear(record, year) {
@@ -129,7 +149,7 @@ function renderYearResults() {
   }
 
   els.yearResults.innerHTML = matches.map(record => `
-    <article class="year-item">
+    <article class="year-item ${state.latestRecord && Number(record.id) === Number(state.latestRecord.id) ? 'highlight-row' : ''}">
       <strong>${escapeHtml(record.period)}｜${escapeHtml(record.item_name)}</strong>
       <span>${formatPrice(record.price_ntd)}，區間 ${formatPrice(record.price_min_ntd)} - ${formatPrice(record.price_max_ntd)}</span>
       <span class="tag ${record.is_estimated ? 'estimated' : ''}">${record.is_estimated ? '推估資料' : '來源紀錄'}</span>
@@ -168,7 +188,7 @@ function drawChart() {
   const points = buildYearPoints();
   const width = canvas.width;
   const height = canvas.height;
-  const padding = { top: 32, right: 36, bottom: 54, left: 64 };
+  const padding = { top: 72, right: 42, bottom: 56, left: 76 };
 
   ctx.clearRect(0, 0, width, height);
   ctx.fillStyle = '#ffffff';
@@ -183,7 +203,7 @@ function drawChart() {
 
   const minYear = 1993;
   const maxYear = 2026;
-  const maxPrice = Math.max(...points.map(point => point.price), 120);
+  const maxPrice = Math.ceil(Math.max(...points.map(point => point.price), 120) / 20) * 20;
   const minPrice = 20;
   const innerWidth = width - padding.left - padding.right;
   const innerHeight = height - padding.top - padding.bottom;
@@ -202,7 +222,7 @@ function drawChart() {
     ctx.moveTo(padding.left, yy);
     ctx.lineTo(width - padding.right, yy);
     ctx.stroke();
-    ctx.fillText(`${price}`, 18, yy + 6);
+    ctx.fillText(`${price}`, padding.left - 48, yy + 6);
   }
 
   [1993, 2000, 2008, 2014, 2018, 2022, 2026].forEach(year => {
@@ -233,7 +253,7 @@ function drawChart() {
 
   ctx.fillStyle = '#1f2933';
   ctx.font = 'bold 20px sans-serif';
-  ctx.fillText('價格 NT$', 18, 28);
+  ctx.fillText('價格 NT$', padding.left, 34);
 }
 
 async function handleSubmit(event) {
@@ -245,16 +265,22 @@ async function handleSubmit(event) {
   const payload = Object.fromEntries(formData.entries());
 
   try {
-    await fetchJson('/api/prices', {
+    const { record } = await fetchJson('/api/prices', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
 
+    state.latestRecord = record;
     els.form.reset();
     document.querySelector('#item-name').value = '雞排';
-    els.formMessage.textContent = '已新增價格紀錄。';
+    els.searchInput.value = '';
+    if (Number.isFinite(Number(record.year_start))) {
+      els.yearSlider.value = Math.min(2026, Math.max(1993, Number(record.year_start)));
+    }
+    els.formMessage.textContent = `已新增價格紀錄：${formatPrice(record.price_ntd)}。`;
     await loadData();
+    els.latestRecord.scrollIntoView({ behavior: 'smooth', block: 'center' });
   } catch (error) {
     els.formMessage.classList.add('error');
     els.formMessage.textContent = error.message;
