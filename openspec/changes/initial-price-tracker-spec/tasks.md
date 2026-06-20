@@ -59,8 +59,8 @@
 
 - [x] 8.1 Confirm server listens on `process.env.PORT || 3000`
 - [x] 8.2 Confirm SQLite uses `/home/data` when `WEBSITE_SITE_NAME` exists
-- [ ] 8.3 Create Azure App Service using Node.js 20 LTS and Free F1 plan
-- [ ] 8.4 Connect Azure Deployment Center to GitHub main branch
+- [x] 8.3 Create Azure App Service using Node.js 20 LTS and Free F1 plan
+- [x] 8.4 Connect Azure Deployment Center to GitHub main branch
 - [ ] 8.5 Verify Azure URL opens the deployed website
 - [ ] 8.6 Verify added data remains after refresh or restart when deployed
 
