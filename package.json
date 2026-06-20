@@ -1,0 +1,26 @@
+{
+  "name": "taiwan-chicken-cutlet-price-tracker",
+  "version": "0.1.0",
+  "description": "台灣雞排歷年物價變化追蹤與查詢網站，使用 Express.js、SQLite 與 OpenSpec 製作。",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "sqlite3": "^5.1.7"
+  },
+  "keywords": [
+    "express",
+    "sqlite",
+    "openspec",
+    "price-tracker",
+    "taiwan"
+  ],
+  "author": "黃祺齡 D1499082",
+  "license": "MIT"
+}

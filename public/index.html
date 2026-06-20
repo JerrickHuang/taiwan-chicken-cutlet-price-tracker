@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>雞排物價觀測站</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-content">
+      <div>
+        <p class="eyebrow">台灣雞排歷年物價追蹤</p>
+        <h1>雞排物價觀測站</h1>
+        <p class="intro">用一片雞排，看見台灣庶民小吃從銅板價走向百元時代的價格變化。</p>
+      </div>
+      <div class="price-badge" aria-label="網站主題圖示">
+        <span class="badge-main">雞排</span>
+        <span class="badge-price">1993-2026</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="summary-band" aria-labelledby="summary-title">
+      <div class="section-heading">
+        <h2 id="summary-title">價格摘要</h2>
+      </div>
+      <div id="summary-grid" class="summary-grid" aria-live="polite">
+        <div class="stat-card">
+          <span class="stat-label">資料筆數</span>
+          <strong class="stat-value">-</strong>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">最低價格</span>
+          <strong class="stat-value">-</strong>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">最高價格</span>
+          <strong class="stat-value">-</strong>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">平均價格</span>
+          <strong class="stat-value">-</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="workbench" aria-label="價格資料操作區">
+      <div class="form-panel">
+        <div class="section-heading compact">
+          <h2>新增價格紀錄</h2>
+        </div>
+        <form id="price-form" class="price-form">
+          <label>
+            日期
+            <input id="record-date" name="record_date" type="date" required>
+          </label>
+          <label>
+            商品名稱
+            <input id="item-name" name="item_name" type="text" value="雞排" required>
+          </label>
+          <label>
+            商品價格
+            <input id="price-ntd" name="price_ntd" type="number" min="1" step="1" placeholder="例如 100" required>
+          </label>
+          <button type="submit">新增紀錄</button>
+          <p id="form-message" class="message" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+
+      <div class="slider-panel">
+        <div class="section-heading compact">
+          <h2>年份觀察</h2>
+          <p>拖曳年份，查看該年附近的雞排價格。</p>
+        </div>
+        <div class="slider-row">
+          <label for="year-slider">年份 <strong id="selected-year">2026</strong></label>
+          <input id="year-slider" type="range" min="1993" max="2026" value="2026">
+        </div>
+        <div id="year-results" class="year-results" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section class="chart-band" aria-labelledby="chart-title">
+      <div class="section-heading">
+        <h2 id="chart-title">歷年價格折線圖</h2>
+        <p>折線以代表價格呈現；同一年有多筆紀錄時，會取平均值繪製。</p>
+      </div>
+      <div class="chart-shell">
+        <canvas id="price-chart" width="1000" height="420" aria-label="雞排歷年價格折線圖"></canvas>
+      </div>
+    </section>
+
+    <section class="table-band" aria-labelledby="table-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="table-title">歷史資料查詢</h2>
+          <p>可搜尋商品、期間、來源代號或備註。</p>
+        </div>
+        <label class="search-box">
+          搜尋
+          <input id="search-input" type="search" placeholder="例如 2018、熱門商圈、R2">
+        </label>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>期間</th>
+              <th>商品</th>
+              <th>代表價</th>
+              <th>價格區間</th>
+              <th>資料性質</th>
+              <th>來源</th>
+              <th>備註</th>
+            </tr>
+          </thead>
+          <tbody id="records-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="crawler-band" aria-labelledby="crawler-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="crawler-title">來源爬蟲示範</h2>
+          <p>輸入公開來源網址，預覽頁面狀態與標題；此功能不會自動覆蓋已驗證資料。</p>
+        </div>
+      </div>
+      <form id="crawler-form" class="crawler-form">
+        <label>
+          來源網址
+          <input id="crawler-url" name="url" type="url" value="https://www.setn.com/m/news.aspx?newsid=370428" required>
+        </label>
+        <button type="submit">預覽來源</button>
+      </form>
+      <div id="crawler-result" class="crawler-result" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>
