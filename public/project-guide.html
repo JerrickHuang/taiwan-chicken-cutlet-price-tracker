@@ -404,6 +404,7 @@
       <a href="#deploy">Azure 部署</a>
       <a href="#screenshots">截圖清單</a>
       <a href="#checklist">檢查表</a>
+      <a href="#full-tutorial">完整教學</a>
     </nav>
   </div>
 
@@ -803,6 +804,131 @@ app.post('/api/prices', async (req, res, next) => {
       </table>
       <div class="callout">
         本頁可作為 Notion 文件的補充連結，也可直接截圖當作「完整實作教學網頁」證明。
+      </div>
+    </section>
+
+    <section id="full-tutorial" class="section-panel">
+      <h2>十三、從零開始完整實作教學流程</h2>
+      <p class="lead">本章是 D5 的核心教學。依照以下順序完成，就能做出一個具備 OpenSpec、前端、Express API、SQLite、GitHub、Azure 部署與爬蟲功能的物價追蹤網站。</p>
+
+      <div class="timeline">
+        <article class="step">
+          <h3>確認專題目標</h3>
+          <p>先決定追蹤商品與資料欄位。本專題選擇「雞排」，網站標題為「雞排物價觀測站」。核心欄位固定為日期、商品名稱、商品價格。</p>
+        </article>
+
+        <article class="step">
+          <h3>建立獨立專案資料夾</h3>
+          <pre><code>mkdir -p /Users/jerrickhuang/CodexProject
+cd /Users/jerrickhuang/CodexProject
+mkdir taiwan-chicken-cutlet-price-tracker
+cd taiwan-chicken-cutlet-price-tracker</code></pre>
+          <p>所有程式碼、OpenSpec、資料庫與前端檔案都放在這個資料夾內。</p>
+        </article>
+
+        <article class="step">
+          <h3>先寫 OpenSpec</h3>
+          <pre><code>mkdir -p openspec/changes/initial-price-tracker-spec/specs</code></pre>
+          <p>至少建立 <code>proposal.md</code>、<code>design.md</code>、<code>tasks.md</code>。先定義新增資料、查詢資料、SQLite 儲存、fetch 串接、圖表互動、爬蟲與部署需求，再開始寫程式。</p>
+        </article>
+
+        <article class="step">
+          <h3>初始化 Node.js 專案</h3>
+          <pre><code>npm init -y
+npm install express sqlite3</code></pre>
+          <p><code>package.json</code> 要有 <code>"start": "node server.js"</code>，並保留 <code>express</code>、<code>sqlite3</code> 相依套件。</p>
+        </article>
+
+        <article class="step">
+          <h3>建立檔案結構</h3>
+          <pre><code>public/index.html
+public/styles.css
+public/app.js
+src/database.js
+src/validation.js
+server.js
+README.md
+.gitignore</code></pre>
+          <p>前端放 <code>public</code>，資料庫與驗證邏輯放 <code>src</code>，Express 入口放 <code>server.js</code>。</p>
+        </article>
+
+        <article class="step">
+          <h3>設計 SQLite 資料表</h3>
+          <pre><code>CREATE TABLE IF NOT EXISTS price_records (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  record_date TEXT NOT NULL,
+  item_name TEXT NOT NULL,
+  period TEXT NOT NULL,
+  year_start INTEGER,
+  year_end INTEGER,
+  price_ntd INTEGER NOT NULL,
+  price_min_ntd INTEGER,
+  price_max_ntd INTEGER,
+  source_ref TEXT NOT NULL DEFAULT 'USER',
+  source_url TEXT NOT NULL DEFAULT '',
+  note TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);</code></pre>
+          <p><code>record_date</code>、<code>item_name</code>、<code>price_ntd</code> 對應老師要求的三個輸入欄位。資料庫要先放入至少 3 筆測試資料，本專題放入 1993-2026 年多筆雞排價格。</p>
+        </article>
+
+        <article class="step">
+          <h3>建立 Express API</h3>
+          <pre><code>GET  /api/health
+GET  /api/prices
+POST /api/prices
+GET  /api/prices/summary
+POST /api/crawl</code></pre>
+          <p>後端要能回傳 JSON、寫入 SQLite、驗證輸入錯誤，並提供靜態前端檔案。</p>
+        </article>
+
+        <article class="step">
+          <h3>建立前端輸入與查詢畫面</h3>
+          <p>前端使用 HTML/CSS/JavaScript，不使用框架。畫面要包含網站標題、摘要卡、新增表單、年份滑桿、折線圖、歷史表格、搜尋欄位與爬蟲示範區。</p>
+          <pre><code>await fetch('/api/prices', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ record_date, item_name, price_ntd })
+});</code></pre>
+        </article>
+
+        <article class="step">
+          <h3>完成互動效果</h3>
+          <p>新增成功後要立即重新載入資料，更新摘要卡、表格、年份滑桿與折線圖。搜尋框可查年份、商品、來源代號與備註。</p>
+        </article>
+
+        <article class="step">
+          <h3>完成爬蟲功能</h3>
+          <p><code>POST /api/crawl</code> 讀取公開來源網址，回傳頁面標題、狀態碼、建議價格與價格候選片段。爬蟲結果只做來源預覽與價格建議，不直接覆蓋正式資料庫。</p>
+        </article>
+
+        <article class="step">
+          <h3>本機測試</h3>
+          <pre><code>npm install
+npm start</code></pre>
+          <p>成功後開啟 <code>http://localhost:3000</code> 與 <code>http://localhost:3000/api/health</code>。確認新增資料、重新整理保留資料、搜尋、滑桿、折線圖、爬蟲功能都正常。</p>
+        </article>
+
+        <article class="step">
+          <h3>上傳 GitHub</h3>
+          <pre><code>git init
+git add .
+git commit -m "init chicken cutlet price tracker"
+git branch -M main
+git remote add origin https://github.com/JerrickHuang/taiwan-chicken-cutlet-price-tracker.git
+git push -u origin main</code></pre>
+          <p><code>.gitignore</code> 必須排除 <code>node_modules/</code>、<code>data/*.db</code>、<code>.env</code> 與 log 檔案。</p>
+        </article>
+
+        <article class="step">
+          <h3>部署 Azure App Service</h3>
+          <p>Azure Web App 選擇 Code、Node 22 LTS、Linux、East Asia、Free F1。Deployment Center 連接 GitHub 的 <code>main</code> 分支。若 Azure Identity 失敗，改用 Publish Profile 放入 GitHub Secret：<code>AZURE_WEBAPP_PUBLISH_PROFILE</code>。</p>
+        </article>
+
+        <article class="step">
+          <h3>用 checklist 驗收</h3>
+          <p>最後回到「十二、作業檢查清單 (checklist)」逐項確認 A1-A6、B1-B4、C1-C4、D1-D5、E1-E2。全部能打勾，代表作品符合期末專題要求。</p>
+        </article>
       </div>
     </section>
 
