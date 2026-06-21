@@ -290,7 +290,7 @@ async function handleSubmit(event) {
 async function handleCrawlerSubmit(event) {
   event.preventDefault();
   els.crawlerResult.classList.remove('error');
-  els.crawlerResult.textContent = '正在讀取來源頁面...';
+  els.crawlerResult.textContent = '正在讀取來源頁面並擷取可能價格...';
 
   try {
     const { result } = await fetchJson('/api/crawl', {
@@ -298,10 +298,28 @@ async function handleCrawlerSubmit(event) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url: els.crawlerUrl.value })
     });
+    const candidates = Array.isArray(result.price_candidates) ? result.price_candidates : [];
+    const candidateList = candidates.length > 0
+      ? `
+        <ul class="crawler-prices">
+          ${candidates.map(candidate => `
+            <li>
+              <strong>${formatPrice(candidate.price_ntd)}</strong>
+              <span>${escapeHtml(candidate.snippet)}</span>
+            </li>
+          `).join('')}
+        </ul>
+      `
+      : '<p class="crawler-note">這個頁面沒有擷取到明確的雞排價格，請換一個來源網址測試。</p>';
+    const suggestedPrice = result.suggested_price_ntd
+      ? `<p class="crawler-suggestion">自動擷取建議價格：<strong>${formatPrice(result.suggested_price_ntd)}</strong></p>`
+      : '<p class="crawler-suggestion muted">自動擷取建議價格：未找到</p>';
 
     els.crawlerResult.innerHTML = `
       <strong>${escapeHtml(result.title)}</strong><br>
       狀態碼：${escapeHtml(result.status)}｜讀取時間：${escapeHtml(new Date(result.fetched_at).toLocaleString('zh-TW'))}<br>
+      ${suggestedPrice}
+      ${candidateList}
       <a href="${escapeHtml(result.url)}" target="_blank" rel="noreferrer">開啟來源頁面</a>
     `;
   } catch (error) {

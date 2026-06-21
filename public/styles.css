@@ -225,6 +225,47 @@ main > section + section {
   background: #fff1ed;
 }
 
+.crawler-suggestion {
+  margin: 10px 0 6px;
+  color: var(--ink);
+}
+
+.crawler-suggestion strong {
+  color: var(--coral);
+  font-size: 1.15rem;
+}
+
+.crawler-suggestion.muted,
+.crawler-note {
+  color: var(--muted);
+}
+
+.crawler-prices {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.crawler-prices li {
+  display: grid;
+  grid-template-columns: 86px 1fr;
+  gap: 10px;
+  align-items: start;
+  border-radius: 6px;
+  background: #fff;
+  padding: 10px;
+}
+
+.crawler-prices strong {
+  color: var(--coral);
+}
+
+.crawler-prices span {
+  color: var(--ink);
+}
+
 label {
   color: var(--ink);
   font-weight: 700;

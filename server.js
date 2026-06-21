@@ -31,6 +31,54 @@ function createApiError(message, statusCode = 400, details = []) {
   return error;
 }
 
+function cleanCrawlerText(html) {
+  return html
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;|&#160;/gi, ' ')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&amp;/gi, '&')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function extractPriceCandidates(text) {
+  const candidates = new Map();
+  const patterns = [
+    /雞排[^。！？\n]{0,80}?(?:NT\$|NTD|新台幣|台幣)?\s*(\d{2,3})\s*元/g,
+    /(?:NT\$|NTD|新台幣|台幣)\s*(\d{2,3})\s*元?[^。！？\n]{0,80}?雞排/g,
+    /雞排[^。！？\n]{0,80}?(\d{2,3})\s*(?:元|塊)/g
+  ];
+
+  for (const pattern of patterns) {
+    for (const match of text.matchAll(pattern)) {
+      const price = Number(match[1]);
+
+      if (!Number.isInteger(price) || price < 20 || price > 250) {
+        continue;
+      }
+
+      const rawSnippet = match[0].replace(/\s+/g, ' ').trim();
+      const current = candidates.get(price);
+
+      if (!current || rawSnippet.length < current.snippet.length) {
+        candidates.set(price, {
+          price_ntd: price,
+          snippet: rawSnippet.slice(0, 120)
+        });
+      }
+    }
+  }
+
+  return [...candidates.values()]
+    .sort((a, b) => b.price_ntd - a.price_ntd)
+    .slice(0, 5);
+}
+
 function buildPriceQuery(query) {
   const conditions = [];
   const params = [];
@@ -192,6 +240,9 @@ function registerRoutes(db) {
       const title = titleMatch
         ? titleMatch[1].replace(/\s+/g, ' ').trim()
         : '未讀取到頁面標題';
+      const text = cleanCrawlerText(html);
+      const priceCandidates = extractPriceCandidates(text);
+      const suggestedPrice = priceCandidates.length > 0 ? priceCandidates[0].price_ntd : null;
 
       res.json({
         result: {
@@ -199,6 +250,8 @@ function registerRoutes(db) {
           status: response.status,
           ok: response.ok,
           title,
+          suggested_price_ntd: suggestedPrice,
+          price_candidates: priceCandidates,
           fetched_at: startedAt.toISOString()
         }
       });
