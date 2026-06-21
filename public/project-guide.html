@@ -352,6 +352,27 @@
       text-align: center;
     }
 
+    .back-to-top {
+      position: fixed;
+      right: 22px;
+      bottom: 22px;
+      z-index: 20;
+      border-radius: 999px;
+      background: var(--teal);
+      color: #fff;
+      padding: 12px 18px;
+      box-shadow: var(--shadow);
+      text-decoration: none;
+      font-weight: 900;
+    }
+
+    .back-to-top:hover,
+    .back-to-top:focus {
+      background: #0f696d;
+      outline: 3px solid rgba(22, 124, 128, 0.24);
+      outline-offset: 3px;
+    }
+
     @media (max-width: 880px) {
       .hero-grid,
       .grid,
@@ -367,11 +388,18 @@
       .section-panel {
         padding: 18px;
       }
+
+      .back-to-top {
+        right: 14px;
+        bottom: 14px;
+        padding: 10px 14px;
+        font-size: 0.92rem;
+      }
     }
   </style>
 </head>
 <body>
-  <header class="hero">
+  <header id="top" class="hero">
     <div class="hero-inner hero-grid">
       <div>
         <p class="eyebrow">逢甲大學 Web 程式設計期末專題</p>
@@ -934,5 +962,6 @@ git push -u origin main</code></pre>
 
     <p class="footer">雞排物價觀測站｜Web 程式設計期末專題｜黃祺齡 D1499082</p>
   </main>
+  <a class="back-to-top" href="#top" aria-label="回到頁首章節選單">回到頁首</a>
 </body>
 </html>
