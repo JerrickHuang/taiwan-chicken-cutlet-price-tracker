@@ -346,6 +346,28 @@
       color: var(--blue);
     }
 
+    .capture-note {
+      margin-top: 12px;
+      border: 1px dashed #9fb3c8;
+      border-radius: 8px;
+      background: #f8fbff;
+      padding: 12px 14px;
+      color: #42526a;
+    }
+
+    .capture-note strong {
+      color: var(--blue);
+    }
+
+    .verify-list {
+      margin: 10px 0 0;
+      padding-left: 1.2rem;
+    }
+
+    .verify-list li + li {
+      margin-top: 4px;
+    }
+
     .footer {
       margin-top: 34px;
       color: var(--muted);
@@ -837,51 +859,102 @@ app.post('/api/prices', async (req, res, next) => {
 
     <section id="full-tutorial" class="section-panel">
       <h2>十三、從零開始完整實作教學流程</h2>
-      <p class="lead">本章是 D5 的核心教學。依照以下順序完成，就能做出一個具備 OpenSpec、前端、Express API、SQLite、GitHub、Azure 部署與爬蟲功能的物價追蹤網站。</p>
+      <p class="lead">本章同步整理 Notion 教學文件的實作流程。照著這個順序操作，可以從零建立一個具備 OpenSpec、前端、Express API、SQLite、GitHub、Azure 部署與爬蟲功能的「雞排物價觀測站」。</p>
+      <div class="callout">
+        截圖本體以 Notion 文件為準；本頁同步放入每張截圖應出現的位置、畫面重點與驗收標準，避免公開網頁引用 Notion 暫時圖片連結後失效。
+      </div>
 
       <div class="timeline">
         <article class="step">
-          <h3>確認專題目標</h3>
-          <p>先決定追蹤商品與資料欄位。本專題選擇「雞排」，網站標題為「雞排物價觀測站」。核心欄位固定為日期、商品名稱、商品價格。</p>
+          <h3>確認專題目標與資料欄位</h3>
+          <p>先決定網站要解決什麼問題。本專題追蹤台灣雞排 1993-2026 年價格變化，網站標題為「雞排物價觀測站」。老師要求的輸入欄位固定為【日期】、【商品名稱】、【商品價格】。</p>
+          <ul class="verify-list">
+            <li>網站主題與商品明確：雞排。</li>
+            <li>核心功能明確：新增、查詢、表格、價格變化、SQLite 儲存。</li>
+            <li>加分功能明確：來源爬蟲、Azure App Service 部署。</li>
+          </ul>
         </article>
 
         <article class="step">
-          <h3>建立獨立專案資料夾</h3>
+          <h3>建立專案資料夾並確認路徑</h3>
+          <p>專案必須放在獨立資料夾，避免和其他作業混在一起。若資料夾還沒建立，使用第一組指令；若已建立，使用第二組指令確認位置。</p>
           <pre><code>mkdir -p /Users/jerrickhuang/CodexProject
 cd /Users/jerrickhuang/CodexProject
 mkdir taiwan-chicken-cutlet-price-tracker
 cd taiwan-chicken-cutlet-price-tracker</code></pre>
-          <p>所有程式碼、OpenSpec、資料庫與前端檔案都放在這個資料夾內。</p>
+          <pre><code>cd /Users/jerrickhuang/CodexProject
+pwd
+ls</code></pre>
+          <div class="capture-note"><strong>Notion 截圖位置：</strong>放在「十六、從零開始完整實作教學流程」的「2. 建立專案資料夾」底下。畫面要截到 <code>pwd</code> 顯示 <code>/Users/jerrickhuang/CodexProject</code>，以及 <code>ls</code> 顯示 <code>taiwan-chicken-cutlet-price-tracker</code>。</div>
         </article>
 
         <article class="step">
-          <h3>先寫 OpenSpec</h3>
+          <h3>先寫 OpenSpec，再開始寫程式</h3>
+          <p>OpenSpec 是本專案的必要要求。先把需求、設計與任務拆清楚，才開始實作，可以證明網站不是臨時拼湊，而是有規格導向的開發流程。</p>
           <pre><code>mkdir -p openspec/changes/initial-price-tracker-spec/specs</code></pre>
-          <p>至少建立 <code>proposal.md</code>、<code>design.md</code>、<code>tasks.md</code>。先定義新增資料、查詢資料、SQLite 儲存、fetch 串接、圖表互動、爬蟲與部署需求，再開始寫程式。</p>
+          <table>
+            <tbody>
+              <tr><th><code>proposal.md</code></th><td>說明為什麼要做這個網站、要新增哪些功能、影響範圍是什麼。</td></tr>
+              <tr><th><code>design.md</code></th><td>說明前端、後端、SQLite、API、爬蟲與 Azure 部署設計。</td></tr>
+              <tr><th><code>tasks.md</code></th><td>把工作拆成可檢查的任務清單，例如建立 API、前端表格、爬蟲、部署。</td></tr>
+            </tbody>
+          </table>
+          <div class="capture-note"><strong>Notion 截圖位置：</strong>放在「3. 先寫 OpenSpec」底下，依序放 <code>proposal.md</code>、<code>design.md</code>、<code>tasks.md</code> 的 VS Code 編輯畫面。</div>
         </article>
 
         <article class="step">
-          <h3>初始化 Node.js 專案</h3>
+          <h3>初始化 Node.js 專案並安裝套件</h3>
+          <p>使用 Node.js 建立 Express 後端，SQLite 作為資料庫。這一步會產生 <code>package.json</code>，並安裝網站執行需要的相依套件。</p>
           <pre><code>npm init -y
 npm install express sqlite3</code></pre>
-          <p><code>package.json</code> 要有 <code>"start": "node server.js"</code>，並保留 <code>express</code>、<code>sqlite3</code> 相依套件。</p>
+          <p><code>package.json</code> 的 <code>scripts</code> 需要有啟動指令：</p>
+          <pre><code>"scripts": {
+  "start": "node server.js"
+}</code></pre>
+          <div class="capture-note"><strong>Notion 截圖位置：</strong>放在「4. 初始化 Node」底下。畫面要截到終端機執行 <code>npm init -y</code>、<code>npm install express sqlite3</code>，以及 <code>package.json</code> 內有 <code>start</code>、<code>express</code>、<code>sqlite3</code>。</div>
         </article>
 
         <article class="step">
-          <h3>建立檔案結構</h3>
-          <pre><code>public/index.html
-public/styles.css
-public/app.js
-src/database.js
-src/validation.js
-server.js
-README.md
-.gitignore</code></pre>
-          <p>前端放 <code>public</code>，資料庫與驗證邏輯放 <code>src</code>，Express 入口放 <code>server.js</code>。</p>
+          <h3>建立專案檔案結構</h3>
+          <p>前端、後端、資料庫、OpenSpec 與部署設定要分層放置，之後檢查和維護會更清楚。</p>
+          <pre><code>taiwan-chicken-cutlet-price-tracker/
+├── .codex/
+├── .github/
+│   └── workflows/
+│       └── main_price-tracker-d1499082.yml
+├── data/
+│   └── data.db
+├── docs/
+├── node_modules/
+├── openspec/
+│   ├── changes/
+│   │   ├── archive/
+│   │   └── initial-price-tracker-spec/
+│   └── specs/
+├── public/
+│   ├── assets/
+│   │   └── chicken-cutlet-hero.png
+│   ├── app.js
+│   ├── index.html
+│   ├── project-guide.html
+│   └── styles.css
+├── scripts/
+├── src/
+│   ├── database.js
+│   └── validation.js
+├── .gitignore
+├── package-lock.json
+├── package.json
+├── README.md
+├── server.js
+└── 期末報告_Notion_教學文件.md</code></pre>
+          <p><code>node_modules/</code> 是本機套件資料夾，不要上傳 GitHub；<code>data/data.db</code> 是本機 SQLite 資料庫。</p>
+          <div class="capture-note"><strong>Notion 截圖位置：</strong>放在「5. 建立檔案結構」底下。截 VS Code Explorer，畫面要看得到 <code>public</code>、<code>src</code>、<code>openspec</code>、<code>server.js</code>、<code>package.json</code>。</div>
         </article>
 
         <article class="step">
-          <h3>設計 SQLite 資料表</h3>
+          <h3>建立 SQLite 資料表與初始資料</h3>
+          <p>SQLite 負責保存所有雞排價格資料。資料表至少要支援日期、商品名稱、價格，並額外保存年份、來源、推估狀態與備註，方便圖表與查詢。</p>
           <pre><code>CREATE TABLE IF NOT EXISTS price_records (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   record_date TEXT NOT NULL,
@@ -892,70 +965,157 @@ README.md
   price_ntd INTEGER NOT NULL,
   price_min_ntd INTEGER,
   price_max_ntd INTEGER,
+  is_estimated INTEGER NOT NULL DEFAULT 0,
   source_ref TEXT NOT NULL DEFAULT 'USER',
-  source_url TEXT NOT NULL DEFAULT '',
-  note TEXT,
+  source_url TEXT DEFAULT '',
+  note TEXT DEFAULT '',
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );</code></pre>
-          <p><code>record_date</code>、<code>item_name</code>、<code>price_ntd</code> 對應老師要求的三個輸入欄位。資料庫要先放入至少 3 筆測試資料，本專題放入 1993-2026 年多筆雞排價格。</p>
+          <pre><code>INSERT INTO price_records (
+  record_date, item_name, period, year_start, year_end,
+  price_ntd, price_min_ntd, price_max_ntd,
+  is_estimated, source_ref, source_url, note
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)</code></pre>
+          <ul class="verify-list">
+            <li><code>CREATE TABLE</code> 證明資料庫結構存在。</li>
+            <li><code>INSERT INTO</code> 證明新增資料會寫入 SQLite。</li>
+            <li>初始資料超過 3 筆，可展示 1993-2026 年價格變化。</li>
+          </ul>
+          <div class="capture-note"><strong>Notion 截圖位置：</strong>放在「6. SQLite 資料庫」底下。第一張截 <code>CREATE TABLE</code>，第二張截 <code>INSERT INTO</code>。</div>
         </article>
 
         <article class="step">
           <h3>建立 Express API</h3>
-          <pre><code>GET  /api/health
-GET  /api/prices
-POST /api/prices
-GET  /api/prices/summary
-POST /api/crawl</code></pre>
-          <p>後端要能回傳 JSON、寫入 SQLite、驗證輸入錯誤，並提供靜態前端檔案。</p>
+          <p>Express 後端負責接收前端請求、查詢 SQLite、寫入新增資料、回傳摘要資料，以及執行爬蟲示範。</p>
+          <table>
+            <thead>
+              <tr><th>API</th><th>用途</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>GET /api/health</code></td><td>確認 Express 和資料庫路徑正常。</td></tr>
+              <tr><td><code>GET /api/prices</code></td><td>取得價格紀錄，可支援搜尋與年份篩選。</td></tr>
+              <tr><td><code>POST /api/prices</code></td><td>新增日期、商品名稱、商品價格到 SQLite。</td></tr>
+              <tr><td><code>POST /api/crawl</code></td><td>輸入來源網址後讀取頁面，擷取可能的雞排價格。</td></tr>
+            </tbody>
+          </table>
+          <pre><code>app.get('/api/prices', async (req, res, next) => {
+  const records = await all(db, `
+    SELECT *
+    FROM price_records
+    ORDER BY COALESCE(year_start, year_end), id
+  `);
+
+  res.json({ records });
+});</code></pre>
+          <div class="capture-note"><strong>Notion 截圖位置：</strong>放在「7. Express API」底下。分別截 <code>/api/health</code>、<code>/api/prices</code>、<code>/api/prices</code> 新增、<code>/api/crawl</code> 的程式碼。</div>
         </article>
 
         <article class="step">
-          <h3>建立前端輸入與查詢畫面</h3>
-          <p>前端使用 HTML/CSS/JavaScript，不使用框架。畫面要包含網站標題、摘要卡、新增表單、年份滑桿、折線圖、歷史表格、搜尋欄位與爬蟲示範區。</p>
-          <pre><code>await fetch('/api/prices', {
+          <h3>建立前端畫面與 fetch 串接</h3>
+          <p>前端使用 HTML、CSS、JavaScript，不使用框架。畫面需包含網站標題、摘要卡、新增表單、年份滑桿、折線圖、搜尋、歷史表格與爬蟲示範。</p>
+          <pre><code>async function fetchJson(url, options = {}) {
+  const response = await fetch(url, options);
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || '資料讀取失敗。');
+  }
+
+  return data;
+}</code></pre>
+          <pre><code>const data = await fetchJson('/api/crawl', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ record_date, item_name, price_ntd })
+  body: JSON.stringify({ url })
 });</code></pre>
+          <p>前端透過 <code>fetchJson()</code> 呼叫後端 API，取得資料後重新渲染畫面，新增資料也會立即更新表格與摘要。</p>
+          <div class="capture-note"><strong>Notion 截圖位置：</strong>放在「8. 前端 fetch 串接」底下。截 <code>fetchJson</code>、讀取價格資料、送出新增表單、爬蟲 fetch 的程式碼。</div>
         </article>
 
         <article class="step">
-          <h3>完成互動效果</h3>
-          <p>新增成功後要立即重新載入資料，更新摘要卡、表格、年份滑桿與折線圖。搜尋框可查年份、商品、來源代號與備註。</p>
+          <h3>完成查詢、滑桿與圖表互動</h3>
+          <p>搜尋框可以縮小資料範圍，年份滑桿可以切換年份觀察資料卡，折線圖用 Canvas 顯示雞排價格長期趨勢。同一年有多筆資料時，圖表取平均值繪製。</p>
+          <ul class="verify-list">
+            <li>搜尋 <code>2018</code> 可以只顯示 2018 相關資料。</li>
+            <li>拖曳年份滑桿到 2026，可以看到 2025-2026 附近資料。</li>
+            <li>折線圖呈現從 1993 到 2026 的價格上升趨勢。</li>
+          </ul>
+          <div class="capture-note"><strong>Notion 截圖位置：</strong>放在「14. 畫面功能說明」或「16. 完整教學流程」的互動功能段落。截搜尋框、滑桿、折線圖各一張最清楚。</div>
         </article>
 
         <article class="step">
           <h3>完成爬蟲功能</h3>
-          <p><code>POST /api/crawl</code> 讀取公開來源網址，回傳頁面標題、狀態碼、建議價格與價格候選片段。爬蟲結果只做來源預覽與價格建議，不直接覆蓋正式資料庫。</p>
+          <p>爬蟲示範會讀取公開來源網頁，抓出頁面標題、狀態碼、讀取時間、可能價格與候選文字片段。這個功能用來輔助找資料，不會直接覆蓋已驗證資料。</p>
+          <pre><code>POST /api/crawl
+{
+  "url": "https://tw.news.yahoo.com/..."
+}</code></pre>
+          <p>成功時應看到狀態碼 <code>200</code>、頁面標題、建議價格或價格候選片段。</p>
+          <div class="capture-note"><strong>Notion 截圖位置：</strong>放在「E1 爬蟲功能」或「16. 完整教學流程」的爬蟲段落。截到來源網址、預覽來源按鈕與回傳結果。</div>
         </article>
 
         <article class="step">
-          <h3>本機測試</h3>
-          <pre><code>npm install
+          <h3>本機啟動與測試</h3>
+          <p>本機測試是老師 D3 要求的重點，需要至少三張截圖：啟動、輸入、查詢。</p>
+          <pre><code>cd /Users/jerrickhuang/CodexProject/taiwan-chicken-cutlet-price-tracker
+npm install
 npm start</code></pre>
-          <p>成功後開啟 <code>http://localhost:3000</code> 與 <code>http://localhost:3000/api/health</code>。確認新增資料、重新整理保留資料、搜尋、滑桿、折線圖、爬蟲功能都正常。</p>
+          <p>成功時終端機應顯示：</p>
+          <pre><code>雞排物價觀測站 running on http://localhost:3000
+SQLite database: /Users/jerrickhuang/CodexProject/taiwan-chicken-cutlet-price-tracker/data/data.db</code></pre>
+          <table>
+            <tbody>
+              <tr><th>啟動畫面</th><td>截 VS Code Terminal，需看到 <code>npm start</code> 與 running on <code>http://localhost:3000</code>。</td></tr>
+              <tr><th>輸入畫面</th><td>截 localhost 首頁的新增表單，需看到日期、商品名稱、商品價格與成功訊息。</td></tr>
+              <tr><th>查詢畫面</th><td>截搜尋框或歷史資料表格，需看到查詢後資料縮小範圍。</td></tr>
+              <tr><th>健康檢查</th><td>開啟 <code>http://localhost:3000/api/health</code>，確認 <code>ok: true</code>。</td></tr>
+            </tbody>
+          </table>
+          <div class="capture-note"><strong>Notion 截圖位置：</strong>放在「十一、本機執行流程」底下，不要放在 checklist 表格裡。啟動、輸入、查詢三張要集中放在這一章。</div>
         </article>
 
         <article class="step">
-          <h3>上傳 GitHub</h3>
+          <h3>建立 GitHub Repo 並上傳原始碼</h3>
+          <p>GitHub 是老師 C1-C4 的檢查重點。Repo 需要可開啟、看得到原始碼，且不能包含 <code>node_modules</code>。</p>
           <pre><code>git init
 git add .
 git commit -m "init chicken cutlet price tracker"
 git branch -M main
 git remote add origin https://github.com/JerrickHuang/taiwan-chicken-cutlet-price-tracker.git
 git push -u origin main</code></pre>
-          <p><code>.gitignore</code> 必須排除 <code>node_modules/</code>、<code>data/*.db</code>、<code>.env</code> 與 log 檔案。</p>
+          <pre><code>node_modules/
+data/*.db
+.env
+*.log</code></pre>
+          <div class="capture-note"><strong>Notion 截圖位置：</strong>放在「十二、GitHub 原始碼繳交」底下。截 GitHub repo 首頁，需看得到 <code>public</code>、<code>src</code>、<code>server.js</code>、<code>package.json</code>，且不要看到 <code>node_modules</code>。</div>
         </article>
 
         <article class="step">
-          <h3>部署 Azure App Service</h3>
-          <p>Azure Web App 選擇 Code、Node 22 LTS、Linux、East Asia、Free F1。Deployment Center 連接 GitHub 的 <code>main</code> 分支。若 Azure Identity 失敗，改用 Publish Profile 放入 GitHub Secret：<code>AZURE_WEBAPP_PUBLISH_PROFILE</code>。</p>
+          <h3>部署到 Azure App Service</h3>
+          <p>Azure 是加分項目 E2。建立 Web App 時選擇 Code、Node 22 LTS、Linux、East Asia、Free F1。Deployment Center 連接 GitHub Actions，讓每次 push 後可自動部署。</p>
+          <table>
+            <tbody>
+              <tr><th>App Service 名稱</th><td><code>price-tracker-d1499082</code></td></tr>
+              <tr><th>Runtime stack</th><td>Node 22 LTS</td></tr>
+              <tr><th>Region</th><td>East Asia</td></tr>
+              <tr><th>Pricing plan</th><td>Free F1</td></tr>
+              <tr><th>公開網址</th><td><a href="https://price-tracker-d1499082-cycwaybya0djcvgy.eastasia-01.azurewebsites.net" target="_blank" rel="noreferrer">Azure demo 網站</a></td></tr>
+            </tbody>
+          </table>
+          <p>若 GitHub Actions 的 Azure Identity 登入失敗，可改用 Publish Profile，新增 GitHub Secret：<code>AZURE_WEBAPP_PUBLISH_PROFILE</code>。</p>
+          <div class="capture-note"><strong>Notion 截圖位置：</strong>放在「十三、Azure App Service 部署流程」底下。截 Azure Overview、GitHub Actions 綠色成功、Azure 網站首頁與 <code>/api/health</code>。</div>
         </article>
 
         <article class="step">
-          <h3>用 checklist 驗收</h3>
-          <p>最後回到「十二、作業檢查清單 (checklist)」逐項確認 A1-A6、B1-B4、C1-C4、D1-D5、E1-E2。全部能打勾，代表作品符合期末專題要求。</p>
+          <h3>用老師的 checklist 逐項驗收</h3>
+          <p>最後回到「十二、作業檢查清單 (checklist)」逐項確認 A1-A6、B1-B4、C1-C4、D1-D5、E1-E2。每一項都要能在網站、GitHub、Notion 文件或 Azure 畫面中找到證據。</p>
+          <ul class="verify-list">
+            <li>A：網站功能，確認輸入、保存、查詢、表格、測試資料。</li>
+            <li>B：技術架構，確認 HTML/CSS/JS、Express、SQLite、fetch。</li>
+            <li>C：原始碼繳交，確認 GitHub repo、package.json、.gitignore。</li>
+            <li>D：技術說明文件，確認商品介紹、localhost 截圖、程式碼片段、完整教學。</li>
+            <li>E：加分項目，確認爬蟲與 Azure demo 網址。</li>
+          </ul>
         </article>
       </div>
     </section>
