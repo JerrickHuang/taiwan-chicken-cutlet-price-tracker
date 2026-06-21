@@ -398,6 +398,7 @@
       <a href="#architecture">技術架構</a>
       <a href="#database">SQLite</a>
       <a href="#api">API</a>
+      <a href="#code-snippets">關鍵程式碼</a>
       <a href="#openspec">OpenSpec</a>
       <a href="#local">本機執行</a>
       <a href="#deploy">Azure 部署</a>
@@ -461,7 +462,7 @@
           <tr><td>圖表</td><td>歷年價格折線圖</td><td>用 Canvas 呈現長期價格趨勢</td><td>已完成</td></tr>
           <tr><td>後端</td><td>Express Web API</td><td>提供查詢、新增、摘要與爬蟲 API</td><td>已完成</td></tr>
           <tr><td>資料庫</td><td>SQLite</td><td>本機使用 data/data.db，Azure 使用 /home/data/data.db</td><td>已完成</td></tr>
-          <tr><td>加分</td><td>爬蟲示範</td><td>讀取公開來源網頁標題、狀態碼與讀取時間</td><td>已完成</td></tr>
+          <tr><td>加分</td><td>爬蟲示範</td><td>讀取公開來源網頁，擷取可能的雞排價格並顯示候選片段</td><td>已完成</td></tr>
           <tr><td>加分</td><td>Azure 部署</td><td>部署 Express + SQLite 到 Azure App Service</td><td>已完成</td></tr>
         </tbody>
       </table>
@@ -524,7 +525,7 @@ src/database.js / SQLite</code></pre>
           <tr><td>POST</td><td><code>/api/prices</code></td><td>新增一筆價格紀錄</td></tr>
           <tr><td>GET</td><td><code>/api/prices/summary</code></td><td>取得資料筆數、最高價、最低價、平均價</td></tr>
           <tr><td>GET</td><td><code>/api/sources</code></td><td>取得來源列表</td></tr>
-          <tr><td>POST</td><td><code>/api/crawl</code></td><td>爬蟲示範，讀取公開來源網頁標題與狀態碼</td></tr>
+          <tr><td>POST</td><td><code>/api/crawl</code></td><td>爬蟲示範，讀取公開來源網頁並擷取可能的雞排價格</td></tr>
         </tbody>
       </table>
       <pre><code>{
@@ -534,8 +535,120 @@ src/database.js / SQLite</code></pre>
 }</code></pre>
     </section>
 
+    <section id="code-snippets" class="section-panel">
+      <h2>七、關鍵程式碼片段</h2>
+      <p class="lead">本章對應老師 D4 要求，整理前端、後端、資料庫操作各一段代表性程式碼，並說明每段在系統中的作用。</p>
+
+      <h3>1. 前端：使用 fetch 呼叫後端 API</h3>
+      <p>檔案位置：<code>public/app.js</code></p>
+      <pre><code>async function fetchJson(url, options = {}) {
+  const response = await fetch(url, options);
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || '資料讀取失敗。');
+  }
+
+  return data;
+}
+
+async function loadData() {
+  const query = els.searchInput.value.trim();
+  const url = query ? `/api/prices?q=${encodeURIComponent(query)}` : '/api/prices';
+  const [{ records }, { summary }] = await Promise.all([
+    fetchJson(url),
+    fetchJson('/api/prices/summary')
+  ]);
+
+  state.records = records;
+  state.summary = summary;
+  renderAll();
+}</code></pre>
+      <p>說明：前端透過 <code>fetchJson()</code> 呼叫 Express API，取得價格資料與摘要資料後，更新表格、摘要卡、年份滑桿與折線圖。</p>
+
+      <h3>2. 後端：Express.js 查詢與新增 API</h3>
+      <p>檔案位置：<code>server.js</code></p>
+      <pre><code>app.get('/api/prices', async (req, res, next) => {
+  try {
+    const { where, params } = buildPriceQuery(req.query);
+    const records = await all(db, `
+      SELECT *
+      FROM price_records
+      ${where}
+      ORDER BY COALESCE(year_start, year_end), id
+    `, params);
+
+    res.json({ records });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post('/api/prices', async (req, res, next) => {
+  try {
+    const record = await insertPriceRecord(db, req.body);
+    res.status(201).json({ record });
+  } catch (error) {
+    next(error);
+  }
+});</code></pre>
+      <p>說明：<code>GET /api/prices</code> 負責查詢 SQLite 資料，支援搜尋與年份篩選；<code>POST /api/prices</code> 接收前端新增資料並寫入資料庫。</p>
+
+      <h3>3. 資料庫：建立 SQLite 資料表並新增資料</h3>
+      <p>檔案位置：<code>src/database.js</code></p>
+      <pre><code>async function createSchema(db) {
+  await run(db, `
+    CREATE TABLE IF NOT EXISTS price_records (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      record_date TEXT NOT NULL,
+      item_name TEXT NOT NULL,
+      period TEXT NOT NULL,
+      year_start INTEGER,
+      year_end INTEGER,
+      price_ntd INTEGER NOT NULL,
+      price_min_ntd INTEGER,
+      price_max_ntd INTEGER,
+      is_estimated INTEGER NOT NULL DEFAULT 0,
+      source_ref TEXT NOT NULL DEFAULT 'USER',
+      source_url TEXT DEFAULT '',
+      note TEXT DEFAULT '',
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+}</code></pre>
+      <p>說明：<code>createSchema()</code> 會建立 <code>price_records</code> 資料表，儲存日期、商品名稱、價格、年份區間、來源與備註等欄位，讓新增資料重新整理後仍能保留。</p>
+
+      <h3>4. 加分功能：爬蟲擷取可能價格</h3>
+      <p>檔案位置：<code>server.js</code></p>
+      <pre><code>function extractPriceCandidates(text) {
+  const candidates = new Map();
+  const patterns = [
+    /雞排[^。！？\n]{0,80}?(?:NT\$|NTD|新台幣|台幣)?\s*(\d{2,3})\s*元/g,
+    /(?:NT\$|NTD|新台幣|台幣)\s*(\d{2,3})\s*元?[^。！？\n]{0,80}?雞排/g,
+    /雞排[^。！？\n]{0,80}?(\d{2,3})\s*(?:元|塊)/g
+  ];
+
+  for (const pattern of patterns) {
+    for (const match of text.matchAll(pattern)) {
+      const price = Number(match[1]);
+      if (Number.isInteger(price) && price >= 20 && price <= 250) {
+        candidates.set(price, {
+          price_ntd: price,
+          snippet: match[0].replace(/\s+/g, ' ').trim().slice(0, 120)
+        });
+      }
+    }
+  }
+
+  return [...candidates.values()]
+    .sort((a, b) => b.price_ntd - a.price_ntd)
+    .slice(0, 5);
+}</code></pre>
+      <p>說明：爬蟲 API 會讀取公開來源網頁，清理 HTML 後用正規表示式尋找「雞排」附近的價格文字，回傳建議價格與最多 5 筆候選片段，供使用者人工確認。</p>
+    </section>
+
     <section id="openspec" class="section-panel">
-      <h2>七、OpenSpec / SDD 流程</h2>
+      <h2>八、OpenSpec / SDD 流程</h2>
       <p class="lead">本專案不是直接寫程式，而是先用 OpenSpec 定義需求、設計與任務，確定網站要做什麼後再進入實作。</p>
       <table>
         <thead>
@@ -551,7 +664,7 @@ src/database.js / SQLite</code></pre>
     </section>
 
     <section id="local" class="section-panel">
-      <h2>八、本機執行教學</h2>
+      <h2>九、本機執行教學</h2>
       <div class="timeline">
         <article class="step">
           <h3>進入專案資料夾</h3>
@@ -576,7 +689,7 @@ src/database.js / SQLite</code></pre>
     </section>
 
     <section id="deploy" class="section-panel">
-      <h2>九、GitHub 與 Azure 部署</h2>
+      <h2>十、GitHub 與 Azure 部署</h2>
       <div class="grid two">
         <article class="mini-card">
           <strong>GitHub</strong>
@@ -603,7 +716,7 @@ src/database.js / SQLite</code></pre>
     </section>
 
     <section id="screenshots" class="section-panel">
-      <h2>十、Notion 截圖清單</h2>
+      <h2>十一、Notion 截圖清單</h2>
       <p class="lead">以下畫面建議放入 Notion，讓文件變成完整的圖文教學。</p>
       <div class="screenshot-list">
         <div class="shot"><strong>1. localhost 首頁</strong><span>網址：<code>http://localhost:3000</code></span></div>
@@ -612,7 +725,7 @@ src/database.js / SQLite</code></pre>
         <div class="shot"><strong>4. 年份滑桿</strong><span>截到 2026 年附近的資料卡。</span></div>
         <div class="shot"><strong>5. 折線圖</strong><span>截到 1993 到 2026 的價格折線圖。</span></div>
         <div class="shot"><strong>6. 搜尋功能</strong><span>搜尋 <code>2018</code> 或 <code>熱門商圈</code>。</span></div>
-        <div class="shot"><strong>7. 爬蟲示範</strong><span>截到狀態碼 200、頁面標題、讀取時間。</span></div>
+        <div class="shot"><strong>7. 爬蟲示範</strong><span>截到狀態碼 200、頁面標題、自動擷取建議價格與候選片段。</span></div>
         <div class="shot"><strong>8. GitHub Repo</strong><span>截到原始碼檔案列表。</span></div>
         <div class="shot"><strong>9. GitHub Actions</strong><span>截到最新 workflow 綠色成功勾勾。</span></div>
         <div class="shot"><strong>10. Azure Overview</strong><span>截到 Running、Node 22 LTS、Resource group。</span></div>
@@ -622,7 +735,7 @@ src/database.js / SQLite</code></pre>
     </section>
 
     <section id="checklist" class="section-panel">
-      <h2>十一、PDF 要求檢查表</h2>
+      <h2>十二、PDF 要求檢查表</h2>
       <table>
         <thead>
           <tr><th>項目</th><th>檢查結果</th></tr>
