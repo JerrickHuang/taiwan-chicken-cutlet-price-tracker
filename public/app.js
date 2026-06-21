@@ -2,7 +2,9 @@ const state = {
   records: [],
   summary: null,
   selectedYear: 2026,
-  latestRecord: null
+  latestRecord: null,
+  chartMeta: null,
+  chartDragging: false
 };
 
 const els = {
@@ -15,6 +17,7 @@ const els = {
   yearResults: document.querySelector('#year-results'),
   summaryGrid: document.querySelector('#summary-grid'),
   chart: document.querySelector('#price-chart'),
+  chartSelected: document.querySelector('#chart-selected'),
   latestRecord: document.querySelector('#latest-record')
 };
 
@@ -157,6 +160,13 @@ function renderYearResults() {
   `).join('');
 }
 
+function setSelectedYear(year) {
+  const nextYear = Math.min(2026, Math.max(1993, Number(year)));
+  els.yearSlider.value = nextYear;
+  renderYearResults();
+  drawChart();
+}
+
 function buildYearPoints() {
   const buckets = new Map();
 
@@ -195,6 +205,8 @@ function drawChart() {
   ctx.fillRect(0, 0, width, height);
 
   if (points.length === 0) {
+    state.chartMeta = null;
+    els.chartSelected.textContent = '目前沒有可互動的價格資料。';
     ctx.fillStyle = '#65758b';
     ctx.font = '24px sans-serif';
     ctx.fillText('目前沒有可繪製的價格資料。', padding.left, height / 2);
@@ -210,6 +222,25 @@ function drawChart() {
 
   const x = year => padding.left + ((year - minYear) / (maxYear - minYear)) * innerWidth;
   const y = price => padding.top + (1 - ((price - minPrice) / (maxPrice - minPrice))) * innerHeight;
+  const selectedPoint = points.reduce((nearest, point) => {
+    if (!nearest) {
+      return point;
+    }
+    return Math.abs(point.year - state.selectedYear) < Math.abs(nearest.year - state.selectedYear)
+      ? point
+      : nearest;
+  }, null);
+
+  state.chartMeta = {
+    points,
+    padding,
+    minYear,
+    maxYear,
+    innerWidth,
+    x,
+    y,
+    selectedPoint
+  };
 
   ctx.strokeStyle = '#d9e2ec';
   ctx.lineWidth = 1;
@@ -251,9 +282,107 @@ function drawChart() {
     ctx.fill();
   });
 
+  if (selectedPoint) {
+    const selectedX = x(selectedPoint.year);
+    const selectedY = y(selectedPoint.price);
+    const label = `${selectedPoint.year}｜${formatPrice(selectedPoint.price.toFixed(1))}`;
+    ctx.font = 'bold 16px sans-serif';
+    const labelWidth = Math.min(230, ctx.measureText(label).width + 28);
+    const labelX = Math.min(width - padding.right - labelWidth, Math.max(padding.left, selectedX - labelWidth / 2));
+    const labelY = Math.max(46, selectedY - 46);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = '#167c80';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(labelX, labelY, labelWidth, 34, 8);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#167c80';
+    ctx.fillText(label, labelX + 14, labelY + 22);
+
+    els.chartSelected.textContent = `目前選取 ${selectedPoint.year} 年，代表價格 ${formatPrice(selectedPoint.price.toFixed(1))}。拖曳綠色圓圈可切換年份。`;
+  }
+
   ctx.fillStyle = '#1f2933';
   ctx.font = 'bold 20px sans-serif';
   ctx.fillText('價格 NT$', padding.left, 34);
+}
+
+function canvasPointFromEvent(event) {
+  const rect = els.chart.getBoundingClientRect();
+  return {
+    x: (event.clientX - rect.left) * (els.chart.width / rect.width),
+    y: (event.clientY - rect.top) * (els.chart.height / rect.height)
+  };
+}
+
+function nearestChartPointFromX(canvasX) {
+  const meta = state.chartMeta;
+  if (!meta || meta.points.length === 0) {
+    return null;
+  }
+
+  return meta.points.reduce((nearest, point) => {
+    const distance = Math.abs(meta.x(point.year) - canvasX);
+    return !nearest || distance < nearest.distance
+      ? { point, distance }
+      : nearest;
+  }, null).point;
+}
+
+function isPointerOnSelectedPoint(event) {
+  const meta = state.chartMeta;
+  if (!meta || !meta.selectedPoint) {
+    return false;
+  }
+
+  const pointer = canvasPointFromEvent(event);
+  const selectedX = meta.x(meta.selectedPoint.year);
+  const selectedY = meta.y(meta.selectedPoint.price);
+  return Math.hypot(pointer.x - selectedX, pointer.y - selectedY) <= 28;
+}
+
+function updateChartSelectionFromPointer(event) {
+  const pointer = canvasPointFromEvent(event);
+  const point = nearestChartPointFromX(pointer.x);
+
+  if (point) {
+    setSelectedYear(point.year);
+  }
+}
+
+function handleChartPointerDown(event) {
+  if (!isPointerOnSelectedPoint(event)) {
+    return;
+  }
+
+  state.chartDragging = true;
+  els.chart.classList.add('dragging');
+  els.chart.setPointerCapture(event.pointerId);
+  updateChartSelectionFromPointer(event);
+}
+
+function handleChartPointerMove(event) {
+  if (!state.chartDragging) {
+    return;
+  }
+
+  event.preventDefault();
+  updateChartSelectionFromPointer(event);
+}
+
+function stopChartDrag(event) {
+  if (!state.chartDragging) {
+    return;
+  }
+
+  state.chartDragging = false;
+  els.chart.classList.remove('dragging');
+
+  if (els.chart.hasPointerCapture(event.pointerId)) {
+    els.chart.releasePointerCapture(event.pointerId);
+  }
 }
 
 async function handleSubmit(event) {
@@ -339,6 +468,10 @@ function bindEvents() {
     renderYearResults();
     drawChart();
   });
+  els.chart.addEventListener('pointerdown', handleChartPointerDown);
+  els.chart.addEventListener('pointermove', handleChartPointerMove);
+  els.chart.addEventListener('pointerup', stopChartDrag);
+  els.chart.addEventListener('pointercancel', stopChartDrag);
 }
 
 bindEvents();

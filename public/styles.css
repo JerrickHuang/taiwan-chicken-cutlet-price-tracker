@@ -378,6 +378,18 @@ canvas {
   width: 100%;
   height: auto;
   display: block;
+  cursor: grab;
+  touch-action: none;
+}
+
+canvas.dragging {
+  cursor: grabbing;
+}
+
+.chart-hint {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-weight: 800;
 }
 
 .search-box {
