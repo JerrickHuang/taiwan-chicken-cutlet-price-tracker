@@ -510,7 +510,7 @@
           <tr><td>查詢</td><td>歷史資料表格</td><td>以表格呈現 1993 到 2026 年雞排價格資料</td><td>已完成</td></tr>
           <tr><td>查詢</td><td>文字搜尋</td><td>搜尋年份、商品、來源代號與備註</td><td>已完成</td></tr>
           <tr><td>互動</td><td>年份滑桿</td><td>拖曳年份查看該年附近資料</td><td>已完成</td></tr>
-          <tr><td>圖表</td><td>歷年價格折線圖</td><td>用 Canvas 呈現長期價格趨勢</td><td>已完成</td></tr>
+          <tr><td>圖表</td><td>歷年價格折線圖</td><td>用 Canvas 呈現長期價格趨勢，並支援拖曳綠色圓圈切換年份</td><td>已完成</td></tr>
           <tr><td>後端</td><td>Express Web API</td><td>提供查詢、新增、摘要與爬蟲 API</td><td>已完成</td></tr>
           <tr><td>資料庫</td><td>SQLite</td><td>本機使用 data/data.db，Azure 使用 /home/data/data.db</td><td>已完成</td></tr>
           <tr><td>加分</td><td>爬蟲示範</td><td>讀取公開來源網頁，擷取可能的雞排價格並顯示候選片段</td><td>已完成</td></tr>
@@ -774,7 +774,7 @@ app.post('/api/prices', async (req, res, next) => {
         <div class="shot"><strong>2. 價格摘要</strong><span>截到資料筆數、最低價、最高價、平均價。</span></div>
         <div class="shot"><strong>3. 新增資料</strong><span>截到新增表單與成功訊息。</span></div>
         <div class="shot"><strong>4. 年份滑桿</strong><span>截到 2026 年附近的資料卡。</span></div>
-        <div class="shot"><strong>5. 折線圖</strong><span>截到 1993 到 2026 的價格折線圖。</span></div>
+        <div class="shot"><strong>5. 折線圖</strong><span>截到 1993 到 2026 的價格折線圖，可補一張拖曳綠色圓圈時的年份與價格標籤。</span></div>
         <div class="shot"><strong>6. 搜尋功能</strong><span>搜尋 <code>2018</code> 或 <code>熱門商圈</code>。</span></div>
         <div class="shot"><strong>7. 爬蟲示範</strong><span>截到狀態碼 200、頁面標題、自動擷取建議價格與候選片段。</span></div>
         <div class="shot"><strong>8. GitHub Repo</strong><span>截到原始碼檔案列表。</span></div>
@@ -1034,13 +1034,14 @@ npm install express sqlite3</code></pre>
 
         <article class="step">
           <h3>完成查詢、滑桿與圖表互動</h3>
-          <p>搜尋框可以縮小資料範圍，年份滑桿可以切換年份觀察資料卡，折線圖用 Canvas 顯示雞排價格長期趨勢。同一年有多筆資料時，圖表取平均值繪製。</p>
+          <p>搜尋框可以縮小資料範圍，年份滑桿可以切換年份觀察資料卡，折線圖用 Canvas 顯示雞排價格長期趨勢。同一年有多筆資料時，圖表取平均值繪製。圖上的綠色圓圈代表目前選取年份，使用者可以按住綠色圓圈左右拖曳，讓圓圈沿著折線移動；拖曳時年份滑桿、年份觀察卡與圖上價格標籤會同步更新。</p>
           <ul class="verify-list">
             <li>搜尋 <code>2018</code> 可以只顯示 2018 相關資料。</li>
             <li>拖曳年份滑桿到 2026，可以看到 2025-2026 附近資料。</li>
             <li>折線圖呈現從 1993 到 2026 的價格上升趨勢。</li>
+            <li>按住折線圖上的綠色圓圈左右拖曳，可以即時切換年份與代表價格。</li>
           </ul>
-          <div class="capture-note"><strong>Notion 截圖位置：</strong>放在「14. 畫面功能說明」或「16. 完整教學流程」的互動功能段落。截搜尋框、滑桿、折線圖各一張最清楚。</div>
+          <div class="capture-note"><strong>Notion 截圖位置：</strong>放在「14. 畫面功能說明」或「16. 完整教學流程」的互動功能段落。截搜尋框、滑桿、折線圖與拖曳綠色圓圈狀態各一張最清楚。</div>
         </article>
 
         <article class="step">
